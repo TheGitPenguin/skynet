@@ -1,0 +1,27 @@
+{
+  "name": "skynet",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./build/index.js",
+  "scripts": {
+    "run": "./run.sh"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "discord.js": "^14.25.1",
+    "node-cron": "^4.2.1",
+    "rss-parser": "^3.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.3",
+    "@types/node-cron": "^3.0.11",
+    "eslint": "^10.0.0",
+    "prettier": "^3.8.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
