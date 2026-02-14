@@ -1,54 +1,58 @@
 # 🤖 Skynet Discord Bot
 
-Bot Discord simple avec Slash Commands.
+Bot Discord modulaire avec gestion des tâches cron et surveillance RSS.
+
+## 📋 À propos
+
+**Skynet** est un bot Discord conçu pour automatiser les tâches récurrentes et surveiller les flux RSS. Il intègre :
+- 🔄 Un planificateur de tâches cron
+- 📡 Un module de surveillance RSS (Geek-o-polis)
+- 🕐 Gestion des fuseaux horaires avec heure d'été/hiver
+- 💬 Notifications automatiques sur Discord
 
 ## 📦 Installation
+
+### Prérequis
+- Node.js 18+
+- npm ou yarn
+- Token Discord Bot
+- IDs des canaux Discord
+
+### Installation des dépendances
 
 ```bash
 npm install
 ```
 
-## 🚀 Démarrage rapide
-
-### Version simple (recommandée pour débuter) :
-
-```bash
-# Compiler
-npx tsc
-
-# Lancer le bot
-node build/simple-bot.js
-```
-
-### Version complète (avec modules) :
-
-```bash
-node build/index.js
-```
-
-### Mode démo (test sans Discord) :
-
-```bash
-node build/index.js --demo
-```
-
-## 📝 Commandes disponibles
-
-Une fois le bot en ligne, tapez `/` dans Discord :
-
-- `/hello [nom]` - Le bot vous dit bonjour
-- `/ping` - Teste la latence du bot
-- `/calc nombre1 nombre2` - Additionne deux nombres
-
 ## ⚙️ Configuration
 
-Le fichier `src/config.json` contient :
+Créez un fichier `src/config.json` :
 
 ```json
 {
-  "token": "VOTRE_TOKEN_BOT",
-  "channelId": "ID_DU_CANAL"
+  "token": "YOUR_DISCORD_BOT_TOKEN",
+  "channelId": "YOUR_LOG_CHANNEL_ID",
+  "channelIdLog": "YOUR_LOG_CHANNEL_ID",
+  "channelRss": "YOUR_RSS_CHANNEL_ID",
+  "channelNewArticle": "YOUR_NEW_ARTICLE_NOTIFICATION_CHANNEL_ID"
 }
+```
+
+Les flux RSS à surveiller peuvent être configurés dans les modules correspondants.
+
+## 🚀 Démarrage
+
+### Développement (avec compilation TypeScript)
+
+```bash
+./run.sh
+```
+
+### Production (utiliser le build existant)
+
+```bash
+npm run build
+node build/index.js
 ```
 
 ## 📚 Structure du projet
@@ -56,49 +60,181 @@ Le fichier `src/config.json` contient :
 ```
 skynet/
 ├── src/
-│   ├── simple-bot.ts       ← Bot simple (1 fichier)
-│   ├── index.ts            ← Bot complet (architecture modulaire)
-│   ├── commands/           ← Gestionnaire de commandes
-│   ├── modules/            ← Modules (Math, Storage, User, Discord)
-│   └── types/              ← Types TypeScript
-├── build/                  ← Code compilé
-└── package.json
+│   ├── index.ts                    # Point d'entrée principal
+│   ├── config.json                 # Configuration du bot
+│   ├── commands/                   # Commandes Discord
+│   │   └── command.ts
+│   ├── modules/                    # Modules principaux
+│   │   ├── discordClient/          # Client Discord
+│   │   ├── cronScheduler/          # Planificateur cron
+│   │   │   └── models/
+│   │   │       └── cronTask.ts     # Interface CronTask
+│   │   └── geekOPolis-Rss/         # Module RSS Geek-o-polis
+│   │       ├── adapter/in/
+│   │       ├── application/
+│   │       │   ├── models/
+│   │       │   │   └── rssTypes.ts
+│   │       │   └── services/
+│   │       │       └── searchLastArticleUseCaseImpl.ts
+│   │       └── geekOPolis-Rss-Component.ts
+│   ├── cronTasks/                  # Tâches cron
+│   │   └── newArticle.ts           # Tâche de vérification RSS
+│   ├── config/                     # Fichiers de configuration
+│   │   └── seenArticles.json       # Articles déjà vus
+│   ├── utils/                      # Utilitaires
+│   │   └── timeUtils.ts            # Gestion des fuseaux horaires
+│   └── types/                      # Types TypeScript
+├── build/                          # Code compilé JavaScript
+├── tsconfig.json                   # Configuration TypeScript
+├── package.json
+├── README.md
+└── run.sh                          # Script de démarrage
 ```
 
-## 🎯 Ajouter une nouvelle commande
+## 🔧 Modules
 
-Dans `src/simple-bot.ts` :
+### 1. DiscordClient
+Client Discord avec gestion des messages.
 
-### 1. Définir la commande (section 3)
+**Méthodes principales :**
+- `sendMessage(channelId: string, content: string)` - Envoie un message à un canal
 
+### 2. CronScheduler
+Planificateur de tâches basé sur node-cron.
+
+**Interface CronTask :**
 ```typescript
-new SlashCommandBuilder()
-    .setName('macommande')
-    .setDescription('Description de ma commande')
-    .addStringOption(option =>
-        option
-            .setName('parametre')
-            .setDescription('Un paramètre')
-            .setRequired(true)
-    ),
-```
-
-### 2. Gérer la commande (section 6)
-
-```typescript
-case 'macommande': {
-    const param = interaction.options.getString('parametre', true);
-    await interaction.reply(`Vous avez envoyé : ${param}`);
-    break;
+interface CronTask {
+  name: string;        // Nom de la tâche
+  schedule: string;    // Pattern cron (ex: "*/5 * * * *")
+  task: () => Promise<void> | void;  // Fonction à exécuter
 }
 ```
 
-### 3. Recompiler et relancer
-
-```bash
-npx tsc
-node build/simple-bot.js
+**Exemple d'utilisation :**
+```typescript
+const cronScheduler = new CronScheduler([
+  {
+    name: "Mon tâche",
+    schedule: "0 9 * * *",  // 9h du matin chaque jour
+    task: async () => { /* code */ }
+  }
+]);
 ```
+
+### 3. GeekOPolis RSS
+Surveille le flux RSS de Geek-o-polis et détecte les nouveaux articles.
+
+**Fonctionnalités :**
+- ✅ Détection automatique des nouveaux articles
+- ✅ Persistance des articles vus dans `seenArticles.json`
+- ✅ Retour typé `CustomItem | null`
+
+**Méthodes :**
+- `checkNewArticle(): Promise<CustomItem | null>` - Vérifie les nouveaux articles
+
+### 4. Utilitaires de temps
+Gère les fuseaux horaires avec heure d'été/hiver automatique.
+
+**Fonctions :**
+- `getLocalTimeString()` - Heure avec zone horaire (ex: "14:30:45 CET")
+- `getLocalDateTimeString()` - Date + heure avec zone horaire (ex: "14.02.2026 14:30:45 CET")
+- `formatRssDate(dateString)` - Formate une date RSS avec zone horaire
+
+## 📅 Tâches cron disponibles
+
+### NewArticle
+Vérifie les nouveaux articles du flux RSS Geek-o-polis.
+
+**Configuration :**
+- **Fréquence :** Toutes les 10 minutes (modifiable)
+- **Action :** Envoie une notification Discord avec le titre, le lien et la date
+
+**Exemple de notification :**
+```
+📰 **Nouvel Article Détecté sur Geek-o-polis!**
+
+**Titre:** Titre de l'article
+**Lien:** https://...
+**Date:** 14.02.2026 14:30:45 CET
+```
+
+## 🔄 Ajouter une nouvelle tâche cron
+
+### 1. Créer la classe
+
+```typescript
+import type { CronTask } from "../modules/cronScheduler/models/cronTask.js";
+
+export class MaTache implements CronTask {
+  name: string;
+  schedule: string;
+  task: () => Promise<void>;
+
+  constructor() {
+    this.name = "Ma Tâche";
+    this.schedule = "0 * * * *";  // Chaque heure
+    this.task = this.executeTask.bind(this);
+  }
+
+  private async executeTask(): Promise<void> {
+    // Votre code ici
+  }
+}
+```
+
+### 2. Ajouter à index.ts
+
+```typescript
+const cronScheduler: CronScheduler = new CronScheduler([
+  new NewArticle(...),
+  new MaTache()  // ← Ajouter ici
+]);
+```
+
+## 📝 Patterns cron courants
+
+| Pattern | Description |
+|---------|-------------|
+| `*/5 * * * *` | Toutes les 5 minutes |
+| `0 * * * *` | Chaque heure |
+| `0 9 * * *` | Chaque jour à 9h |
+| `0 9 * * 1` | Chaque lundi à 9h |
+| `0 0 1 * *` | Le 1er de chaque mois à minuit |
+
+## 🔍 Monitorer les articles RSS
+
+Les articles vus sont stockés dans `src/config/seenArticles.json`.
+
+**Format :**
+```json
+{
+  "articles": [
+    "guid-or-link-1",
+    "guid-or-link-2"
+  ]
+}
+```
+
+Nettoyez ce fichier pour réinitialiser la détection.
+
+## 🐛 Dépannage
+
+### Le bot ne démarre pas
+- Vérifiez que le token Discord est correct
+- Vérifiez que les IDs de canaux existent
+
+### Les tâches cron ne s'exécutent pas
+- Vérifiez le pattern cron (utiliser un validateur en ligne)
+- Vérifiez les logs de la tâche
+
+### Les dates ne sont pas correctes
+- La zone horaire est configurée pour `Europe/Paris`
+- Modifiez `'Europe/Paris'` dans `src/utils/timeUtils.ts` pour votre zone
+
+## 📄 Licence
+
+MIT
 
 ## 🔧 Configuration Discord
 
@@ -133,17 +269,6 @@ Copiez l'URL générée et ouvrez-la pour inviter le bot sur votre serveur.
 
 - Vérifiez que le token dans `config.json` est correct
 - Le token doit commencer par `MTQ...` ou `OTg...`
-
-### Les commandes n'apparaissent pas
-
-- Attendez 1-2 minutes (synchronisation Discord)
-- Vérifiez que le bot a les permissions `applications.commands`
-- Tapez `/` pour forcer le rafraîchissement
-
-### "Used disallowed intents"
-
-- Ce bot n'utilise PAS les intents privilégiés
-- Si l'erreur persiste, utilisez `simple-bot.ts` qui est plus léger
 
 ## 📖 Ressources
 
