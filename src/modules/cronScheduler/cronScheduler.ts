@@ -18,19 +18,19 @@ export class CronScheduler {
     private scheduleTask(cronTask: CronTask): void {
         try {
             const scheduledTask = cron.schedule(cronTask.schedule, async () => {
-                console.log(`[${getLocalTimeString()}] Exécution de la tâche cron : "${cronTask.name}"`);
+                console.log(`[${getLocalTimeString()}] Executing cron task: "${cronTask.name}"`);
                 try {
                     await Promise.resolve(cronTask.task());
-                    console.log(`[${getLocalTimeString()}] Tâche "${cronTask.name}" terminée avec succès.`);
+                    console.log(`[${getLocalTimeString()}] Task "${cronTask.name}" completed successfully.`);
                 } catch (error) {
-                    console.error(`Erreur lors de l'exécution de la tâche "${cronTask.name}" :`, error);
+                    console.error(`Error executing task "${cronTask.name}":`, error);
                 }
             });
 
             this.tasks.set(cronTask.name, scheduledTask);
-            console.log(`Tâche cron "${cronTask.name}" planifiée : ${cronTask.schedule}`);
+            console.log(`Cron task "${cronTask.name}" scheduled: ${cronTask.schedule}`);
         } catch (error) {
-            console.error(`Erreur lors de la planification de la tâche "${cronTask.name}" :`, error);
+            console.error(`Error scheduling task "${cronTask.name}":`, error);
         }
     }
 
@@ -39,16 +39,16 @@ export class CronScheduler {
         if (task) {
             task.stop();
             this.tasks.delete(taskName);
-            console.log(`Tâche cron "${taskName}" arrêtée.`);
+            console.log(`Cron task "${taskName}" stopped.`);
         } else {
-            console.warn(`Tâche cron "${taskName}" non trouvée.`);
+            console.warn(`Cron task "${taskName}" not found.`);
         }
     }
 
     public stopAllTasks(): void {
         for (const [taskName, task] of this.tasks.entries()) {
             task.stop();
-            console.log(`Tâche cron "${taskName}" arrêtée.`);
+            console.log(`Cron task "${taskName}" stopped.`);
         }
         this.tasks.clear();
     }

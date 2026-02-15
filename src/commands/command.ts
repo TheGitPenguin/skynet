@@ -1,3 +1,6 @@
-export interface Command {
+import { SlashCommandBuilder, type ChatInputCommandInteraction } from "discord.js";
 
+export interface Command {
+    data: SlashCommandBuilder;
+    execute(interaction: ChatInputCommandInteraction): Promise<void>;
 }

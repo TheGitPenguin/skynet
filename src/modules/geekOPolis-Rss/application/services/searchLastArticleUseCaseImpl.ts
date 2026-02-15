@@ -31,7 +31,7 @@ export class SearchLastArticleUseCaseImpl implements SearchLastArticleUseCase {
                 this.seenGuids = new Set(parsed.articles || []);
             }
         } catch (error) {
-            console.error("Erreur lors du chargement des articles vus :", error);
+            console.error("Error loading seen articles:", error);
         }
     }
 
@@ -40,44 +40,44 @@ export class SearchLastArticleUseCaseImpl implements SearchLastArticleUseCase {
             const data = JSON.stringify({ articles: Array.from(this.seenGuids) }, null, 2);
             fs.writeFileSync(this.seenArticlesPath, data, 'utf-8');
         } catch (error) {
-            console.error("Erreur lors de la sauvegarde des articles vus :", error);
+            console.error("Error saving seen articles:", error);
         }
     }
 
     async checkNewArticle(): Promise<CustomItem | null> {
         try {
-            console.log(`[${getLocalTimeString()}] Vérification du flux...`);
+            console.log(`[${getLocalTimeString()}] Checking feed...`);
             
             const feed = await this.parser.parseURL(this.rssChannelUrl);
             const latestArticle = feed.items[0];
 
             if (!latestArticle) {
-                console.warn("Aucun article trouvé dans le flux.");
+                console.warn("No articles found in feed.");
                 return null;
             }
 
             const currentGuid = latestArticle.guid || latestArticle.link;
 
-            // Si l'article n'a pas encore été vu
+            // If article has not been seen yet
             if (!this.seenGuids.has(currentGuid)) {
                 this.seenGuids.add(currentGuid);
                 this.saveSeenArticles();
                 
                 console.log(`[${getLocalTimeString()}] --------------------------------`)
-                console.log(`[${getLocalTimeString()}] 📢 NOUVEL ARTICLE DÉTECTÉ !`);
-                console.log(`[${getLocalTimeString()}] Titre : ${latestArticle.title}`);
-                console.log(`[${getLocalTimeString()}] Lien  : ${latestArticle.link}`);
-                console.log(`[${getLocalTimeString()}] Date  : ${latestArticle.pubDate}`);
+                console.log(`[${getLocalTimeString()}] 📢 NEW ARTICLE DETECTED!`);
+                console.log(`[${getLocalTimeString()}] Title: ${latestArticle.title}`);
+                console.log(`[${getLocalTimeString()}] Link : ${latestArticle.link}`);
+                console.log(`[${getLocalTimeString()}] Date : ${latestArticle.pubDate}`);
                 console.log(`[${getLocalTimeString()}] --------------------------------`)
                 
                 return latestArticle;
             } else {
-                console.log(`[${getLocalTimeString()}] Rien de neuf sur Geek-o-polis.`);
+                console.log(`[${getLocalTimeString()}] Nothing new on Geek-o-polis.`);
                 return null;
             }
 
         } catch (error) {
-            console.error("Erreur lors de la récupération :", error);
+            console.error("Error retrieving feed:", error);
             return null;
         }
     }

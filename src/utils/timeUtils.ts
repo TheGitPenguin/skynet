@@ -1,7 +1,7 @@
 /**
- * Obtient l'heure locale formatée avec la zone horaire
- * Prend automatiquement en compte l'heure d'été et l'heure d'hiver
- * @returns Chaîne formatée avec heure et zone horaire (ex: "14:30:45 CET" ou "15:30:45 CEST")
+ * Gets the current time formatted with timezone
+ * Automatically accounts for daylight saving time
+ * @returns Formatted string with time and timezone (ex: "14:30:45 CET" or "15:30:45 CEST")
  */
 export function getLocalTimeString(): string {
     const now = new Date();
@@ -11,26 +11,26 @@ export function getLocalTimeString(): string {
         minute: '2-digit',
         second: '2-digit',
         hour12: false,
-        timeZone: 'Europe/Paris', // Change selon ta zone (Europe/London, America/New_York, etc.)
+        timeZone: 'Europe/Paris', // Change according to your timezone (Europe/London, America/New_York, etc.)
     };
     
     const timeString = new Intl.DateTimeFormat('fr-FR', timeOptions).format(now);
     
-    // Obtient le nom de la zone horaire (CET, CEST, UTC, etc.)
+    // Gets the timezone name (CET, CEST, UTC, etc.)
     const tzOptions: Intl.DateTimeFormatOptions = {
         timeZoneName: 'short',
         timeZone: 'Europe/Paris',
     };
     
     const tzString = new Intl.DateTimeFormat('fr-FR', tzOptions).format(now);
-    const tz = tzString.split(' ')[1]; // Extrait le timezone court (CET, CEST, etc.)
+    const tz = tzString.split(' ')[1]; // Extract short timezone (CET, CEST, etc.)
     
     return `${timeString} ${tz}`;
 }
 
 /**
- * Obtient la date et l'heure locale formatées
- * @returns Chaîne formatée (ex: "14.02.2026 14:30:45 CET")
+ * Gets the local date and time formatted
+ * @returns Formatted string (ex: "14.02.2026 14:30:45 CET")
  */
 export function getLocalDateTimeString(): string {
     const now = new Date();
@@ -60,9 +60,9 @@ export function getLocalDateTimeString(): string {
 }
 
 /**
- * Formate une date RSS en heure locale avec la zone horaire
- * @param dateString - Chaîne de date RSS (ISO ou RFC)
- * @returns Chaîne formatée avec zone horaire (ex: "14.02.2026 14:30:45 CET")
+ * Formats an RSS date to local time with timezone
+ * @param dateString - RSS date string (ISO or RFC)
+ * @returns Formatted string with timezone (ex: "14.02.2026 14:30:45 CET")
  */
 export function formatRssDate(dateString: string): string {
     try {

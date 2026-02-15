@@ -1,5 +1,5 @@
 /**
- * Types de base pour l'application
+ * Base types for the application
  */
 
 export interface CommandOptions {

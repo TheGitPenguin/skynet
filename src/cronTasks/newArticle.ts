@@ -14,7 +14,7 @@ export class NewArticle implements CronTask {
 
     constructor(discordClient: DiscordClient, searchLastArticleUseCase: SearchLastArticleUseCase, channelId: string) {
         this.name = "Check New Articles";
-        this.schedule = "*/1 * * * *"; // Toutes les 10 minutes
+        this.schedule = "*/1 * * * *";
         this.discordClient = discordClient;
         this.searchLastArticleUseCase = searchLastArticleUseCase;
         this.channelId = channelId;
@@ -37,7 +37,7 @@ export class NewArticle implements CronTask {
                 await this.discordClient.sendMessage(this.channelId, message);
             }
         } catch (error) {
-            console.error("Erreur dans la tâche cron NewArticle :", error);
+            console.error("Error in NewArticle cron task:", error);
         }
     }
 }

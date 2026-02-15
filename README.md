@@ -94,10 +94,13 @@ skynet/
 ## 🔧 Modules
 
 ### 1. DiscordClient
-Client Discord avec gestion des messages.
+Client Discord avec gestion des messages et des slash commands.
 
 **Méthodes principales :**
 - `sendMessage(channelId: string, content: string)` - Envoie un message à un canal
+- `registerCommand(command: Command)` - Enregistre une slash command
+- `registerCommands(commands: Command[])` - Enregistre plusieurs slash commands
+- `deployCommands(guildId?: string)` - Déploie les commandes auprès de Discord
 
 ### 2. CronScheduler
 Planificateur de tâches basé sur node-cron.
@@ -141,7 +144,127 @@ Gère les fuseaux horaires avec heure d'été/hiver automatique.
 - `getLocalDateTimeString()` - Date + heure avec zone horaire (ex: "14.02.2026 14:30:45 CET")
 - `formatRssDate(dateString)` - Formate une date RSS avec zone horaire
 
-## 📅 Tâches cron disponibles
+## � Slash Commands
+
+### Commandes disponibles
+
+| Commande | Description |
+|----------|-------------|
+| `/ping` | Teste la latence du bot |
+| `/status` | Affiche l'état du bot (uptime, latence, serveurs) |
+| `/help` | Affiche la liste des commandes disponibles |
+
+### Ajouter une nouvelle commande
+
+#### 1. Créer le fichier de la commande
+
+Créez un nouveau fichier dans `src/commands/` (ex: `src/commands/mycommand.ts`):
+
+```typescript
+import { SlashCommandBuilder, type ChatInputCommandInteraction } from "discord.js";
+import type { Command } from "./command.js";
+
+export class MyCommand implements Command {
+    data = new SlashCommandBuilder()
+        .setName("mycommand")
+        .setDescription("Description de ma commande")
+        .addStringOption(option =>
+            option
+                .setName("parametre")
+                .setDescription("Un paramètre")
+                .setRequired(true)
+        );
+
+    async execute(interaction: ChatInputCommandInteraction): Promise<void> {
+        const param = interaction.options.getString("parametre", true);
+        await interaction.reply({
+            content: `Vous avez envoyé : ${param}`,
+            ephemeral: true  // Message visible seulement pour vous
+        });
+    }
+}
+```
+
+#### 2. Enregistrer la commande dans index.ts
+
+```typescript
+import { MyCommand } from "./commands/mycommand.js";
+
+// ...
+
+discordClient.registerCommands([
+    new PingCommand(),
+    new StatusCommand(),
+    new HelpCommand(),
+    new MyCommand()  // ← Ajouter ici
+]);
+```
+
+#### 3. Déployer les commandes
+
+Deux méthodes :
+
+**Option 1 : Déploiement global (recommandé)**
+```typescript
+await discordClient.deployCommands();
+```
+
+**Option 2 : Déploiement sur un serveur spécifique (plus rapide pour le développement)**
+```typescript
+await discordClient.deployCommands("YOUR_GUILD_ID");
+```
+
+### Structure d'une Command
+
+L'interface `Command` requiert :
+
+```typescript
+interface Command {
+    data: SlashCommandBuilder;  // Configuration slash command Discord
+    execute(interaction: ChatInputCommandInteraction): Promise<void>;  // Logique d'exécution
+}
+```
+
+### Options SlashCommandBuilder courants
+
+```typescript
+// String
+.addStringOption(option =>
+    option
+        .setName("name")
+        .setDescription("description")
+        .setRequired(true)
+)
+
+// Integer
+.addIntegerOption(option =>
+    option
+        .setName("name")
+        .setDescription("description")
+        .setMinValue(1)
+        .setMaxValue(100)
+)
+
+// Boolean
+.addBooleanOption(option =>
+    option
+        .setName("name")
+        .setDescription("description")
+)
+
+// Choices
+.addStringOption(option =>
+    option
+        .setName("name")
+        .setDescription("description")
+        .addChoices(
+            { name: "Option 1", value: "option1" },
+            { name: "Option 2", value: "option2" }
+        )
+)
+```
+
+## �📅 Tâches cron disponibles
 
 ### NewArticle
 Vérifie les nouveaux articles du flux RSS Geek-o-polis.

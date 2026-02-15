@@ -1,4 +1,3 @@
-import type { DiscordClient } from "../discordClient/discordClient.js";
 import type { SearchLastArticleUseCase } from "./adapter/in/searchLastArticleUseCase.js";
 import { SearchLastArticleUseCaseImpl } from "./application/services/searchLastArticleUseCaseImpl.js";
 
