@@ -5,7 +5,8 @@
   "main": "./build/index.js",
   "scripts": {
     "run": "./run.sh",
-    "build": "rm -fr ./build/* && mkdir build && npx tsc"
+    "build": "rm -fr ./build/* && mkdir build && npx tsc",
+    "runSystem": "node build/index.js"
   },
   "keywords": [],
   "author": "",
