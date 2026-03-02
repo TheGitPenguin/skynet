@@ -4,7 +4,7 @@ import { SearchLastArticleUseCaseImpl } from "./application/services/searchLastA
 export class GeekOPolisRssComponent {
     public searchLastArticleUseCase: SearchLastArticleUseCase;
 
-    constructor(rssChannelUrl: string) {
-        this.searchLastArticleUseCase = new SearchLastArticleUseCaseImpl(rssChannelUrl);
+    constructor(rssChannelUrl: string, savePath: string) {
+        this.searchLastArticleUseCase = new SearchLastArticleUseCaseImpl(rssChannelUrl, savePath);
     }
 }

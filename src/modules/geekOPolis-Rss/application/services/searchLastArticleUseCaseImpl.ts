@@ -16,10 +16,10 @@ export class SearchLastArticleUseCaseImpl implements SearchLastArticleUseCase {
 
     private seenGuids: Set<string> = new Set();
 
-    constructor(rssChannelUrl: string) {
+    constructor(rssChannelUrl: string, savePath: string) {
         this.rssChannelUrl = rssChannelUrl;
         this.parser = new Parser();
-        this.seenArticlesPath = path.join(process.cwd(), 'src', 'config', 'seenArticles.json');
+        this.seenArticlesPath = savePath;
         this.loadSeenArticles();
     }
 

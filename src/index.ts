@@ -9,7 +9,7 @@ import { HelloCommand } from "./commands/hello.js";
 import { HelpCommand } from "./commands/help.js";
 import { WelcomeMemberAdd } from "./memberAdd/welcome.js";
 import { GeekOPolisStream } from "./modules/geekOPolisStream/geekOPolisStream.js";
-const { token, portTwitch, twitchSecret, channelId, channelIdLog, channelRss, channelNewArticle, clientId, guildId, welcomeChannel, streamChannel } = config;
+const { saveDirectory, token, portTwitch, twitchSecret, channelId, channelIdLog, channelRss, channelNewArticle, clientId, guildId, welcomeChannel, streamChannel } = config;
 
 const clientOptions: ClientOptions = {
     intents: [
@@ -47,13 +47,13 @@ discordClient.registerCommand(helpCommand);
     await discordClient.deployCommands(clientId, guildId);
 })();
 
-const geekOPolisRssComponent: GeekOPolisRssComponent = new GeekOPolisRssComponent(channelRss);
+const geekOPolisRssComponent: GeekOPolisRssComponent = new GeekOPolisRssComponent(channelRss, saveDirectory + "seenArticles.json");
 
-const geekOPolisStream = new GeekOPolisStream(portTwitch, twitchSecret, async (streamerName, title, gameName) => {
-    const message = `🔴 **${streamerName}** est en live !\n🎮 ${gameName}\n📺 ${title}\nhttps://www.twitch.tv/${streamerName.toLowerCase()}`;
-    await discordClient.sendMessage(streamChannel, message);
-});
-geekOPolisStream.start();
+//const geekOPolisStream = new GeekOPolisStream(portTwitch, twitchSecret, async (streamerName, title, gameName) => {
+//    const message = `🔴 **${streamerName}** est en live !\n🎮 ${gameName}\n📺 ${title}\nhttps://www.twitch.tv/${streamerName.toLowerCase()}`;
+//    await discordClient.sendMessage(streamChannel, message);
+//});
+//geekOPolisStream.start();
 
 const cronScheduler: CronScheduler = new CronScheduler([
     new NewArticle(
