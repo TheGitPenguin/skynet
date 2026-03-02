@@ -16,7 +16,7 @@ export class DiscordClient {
         guildId: string, 
         welcomeChannel: string
     ) {
-        this.client = new Client(clientOptions)
+        this.client = new Client(clientOptions);
         this.token = token;
 
         this.client.on("clientReady", async (c) => {
