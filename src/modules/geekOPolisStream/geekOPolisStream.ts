@@ -1,5 +1,6 @@
 import express, { type Request, type Response } from 'express';
 import crypto from 'crypto';
+import type { LoggerSubscriber } from '../logger/logger.js';
 
 export type StreamNotificationCallback = (streamerName: string, title: string, gameName: string) => Promise<void>;
 
@@ -8,15 +9,18 @@ export class GeekOPolisStream {
     private port: number;
     private secret: string;
     private onStreamLive: StreamNotificationCallback | undefined;
+    private logger: LoggerSubscriber;
 
-    constructor(port: number, secret: string, onStreamLive?: StreamNotificationCallback) {
+    constructor(port: number, secret: string, logger: LoggerSubscriber, onStreamLive?: StreamNotificationCallback) {
         this.app = express();
         this.port = port;
         this.secret = secret;
         this.onStreamLive = onStreamLive;
+        this.logger = logger;
 
         this.app.use(express.raw({ type: 'application/json' }));
         this.setupRoutes();
+        this.logger.info(`GeekOPolis Stream module initialized (port: ${port})`);
     }
 
     private setupRoutes(): void {
@@ -53,8 +57,10 @@ export class GeekOPolisStream {
         const hmac = HMAC_PREFIX + this.getHmac(message);
         const twitchSignature = req.headers[TWITCH_MESSAGE_SIGNATURE] as string;
 
+        this.logger.debug('Incoming webhook request, verifying signature...');
+
         if (!twitchSignature || !this.verifyMessage(hmac, twitchSignature)) {
-            console.error('403 Forbidden: Invalid signature');
+            this.logger.error('403 Forbidden: Invalid signature');
             res.sendStatus(403);
             return;
         }
@@ -64,8 +70,8 @@ export class GeekOPolisStream {
 
         switch (messageType) {
             case 'notification':
-                console.log(`Event received: ${notification.subscription.type}`);
-                console.log(JSON.stringify(notification.event, null, 4));
+                this.logger.info(`Event received: ${notification.subscription.type}`);
+                this.logger.info(JSON.stringify(notification.event, null, 4));
 
                 if (notification.subscription.type === 'stream.online' && this.onStreamLive) {
                     const event = notification.event;
@@ -73,7 +79,7 @@ export class GeekOPolisStream {
                     const title = event?.title ?? '';
                     const gameName = event?.game_name ?? '';
                     this.onStreamLive(streamerName, title, gameName).catch(err =>
-                        console.error('Error sending stream notification:', err)
+                        this.logger.error('Error sending stream notification:', err)
                     );
                 }
 
@@ -81,18 +87,18 @@ export class GeekOPolisStream {
                 break;
 
             case 'webhook_callback_verification':
-                console.log('Verification challenge received.');
+                this.logger.info('Verification challenge received.');
                 res.set('Content-Type', 'text/plain').status(200).send(notification.challenge);
                 break;
 
             case 'revocation':
-                console.log(`Subscription revoked: ${notification.subscription.type}`);
-                console.log(`Reason: ${notification.subscription.status}`);
+                this.logger.info(`Subscription revoked: ${notification.subscription.type}`);
+                this.logger.info(`Reason: ${notification.subscription.status}`);
                 res.sendStatus(204);
                 break;
 
             default:
-                console.log(`Unknown message type: ${messageType}`);
+                this.logger.warn(`Unknown message type: ${messageType}`);
                 res.sendStatus(204);
                 break;
         }
@@ -100,7 +106,7 @@ export class GeekOPolisStream {
 
     public start(): void {
         this.app.listen(this.port, () => {
-            console.log(`GeekOPolis Stream webhook listening on http://localhost:${this.port}/geekopolis/stream`);
+            this.logger.info(`GeekOPolis Stream webhook listening on http://localhost:${this.port}/geekopolis/stream`);
         });
     }
 }

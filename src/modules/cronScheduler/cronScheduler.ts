@@ -1,12 +1,17 @@
 import cron from 'node-cron';
 import type { CronTask } from './models/cronTask.js';
 import { getLocalTimeString } from '../../utils/timeUtils.js';
+import type { LoggerSubscriber } from '../logger/logger.js';
 
 export class CronScheduler {
     private tasks: Map<string, cron.ScheduledTask> = new Map();
+    private logger: LoggerSubscriber;
 
-    constructor(cronTasks: CronTask[]) {
+    constructor(logger: LoggerSubscriber, cronTasks: CronTask[]) {
+        this.logger = logger;
+        this.logger.info(`Initializing ${cronTasks.length} cron task(s)...`);
         this.initializeTasks(cronTasks);
+        this.logger.info('CronScheduler ready.');
     }
 
     private initializeTasks(cronTasks: CronTask[]): void {
@@ -18,19 +23,19 @@ export class CronScheduler {
     private scheduleTask(cronTask: CronTask): void {
         try {
             const scheduledTask = cron.schedule(cronTask.schedule, async () => {
-                console.log(`[${getLocalTimeString()}] Executing cron task: "${cronTask.name}"`);
+                this.logger.info(`Executing cron task: "${cronTask.name}"`);
                 try {
                     await Promise.resolve(cronTask.task());
-                    console.log(`[${getLocalTimeString()}] Task "${cronTask.name}" completed successfully.`);
+                    this.logger.info(`Task "${cronTask.name}" completed successfully.`);
                 } catch (error) {
-                    console.error(`Error executing task "${cronTask.name}":`, error);
+                    this.logger.error(`Error executing task "${cronTask.name}":`, error);
                 }
             });
 
             this.tasks.set(cronTask.name, scheduledTask);
-            console.log(`Cron task "${cronTask.name}" scheduled: ${cronTask.schedule}`);
+            this.logger.info(`Cron task "${cronTask.name}" scheduled: ${cronTask.schedule}`);
         } catch (error) {
-            console.error(`Error scheduling task "${cronTask.name}":`, error);
+            this.logger.error(`Error scheduling task "${cronTask.name}":`, error);
         }
     }
 
@@ -39,18 +44,20 @@ export class CronScheduler {
         if (task) {
             task.stop();
             this.tasks.delete(taskName);
-            console.log(`Cron task "${taskName}" stopped.`);
+            this.logger.info(`Cron task "${taskName}" stopped.`);
         } else {
-            console.warn(`Cron task "${taskName}" not found.`);
+            this.logger.warn(`Cron task "${taskName}" not found.`);
         }
     }
 
     public stopAllTasks(): void {
+        this.logger.info(`Stopping all ${this.tasks.size} cron task(s)...`);
         for (const [taskName, task] of this.tasks.entries()) {
             task.stop();
-            console.log(`Cron task "${taskName}" stopped.`);
+            this.logger.info(`Cron task "${taskName}" stopped.`);
         }
         this.tasks.clear();
+        this.logger.info('All cron tasks stopped.');
     }
 
     public getTasks(): Map<string, cron.ScheduledTask> {
